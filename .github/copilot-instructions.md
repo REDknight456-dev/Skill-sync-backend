@@ -1,0 +1,5 @@
+- Project: Skill-Sync API (Spring Boot 3.4)
+- Use '.' as working directory.
+- Keep explanations concise and code-focused.
+- Do not install extensions unless explicitly requested.
+- Update this checklist if project requirements change.
