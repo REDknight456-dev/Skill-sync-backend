@@ -48,6 +48,22 @@ public class CourseServiceImpl implements CourseService {
     @Override
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
+    public CourseDto updateCourse(Long id, CourseDto request) {
+        Course existing = courseRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+
+        existing.setTitle(request.title());
+        existing.setDescription(request.description());
+        existing.setInstructor(request.instructor());
+        existing.setPrice(request.price() == null ? BigDecimal.ZERO : request.price());
+
+        Course saved = courseRepository.save(existing);
+        return courseMapper.toDto(saved);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteCourse(Long id) {
         courseRepository.deleteById(id);
     }

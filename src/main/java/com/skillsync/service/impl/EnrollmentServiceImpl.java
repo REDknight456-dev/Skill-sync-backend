@@ -8,6 +8,7 @@ import com.skillsync.repository.CourseRepository;
 import com.skillsync.repository.EnrollmentRepository;
 import com.skillsync.repository.UserRepository;
 import com.skillsync.service.EnrollmentService;
+import com.skillsync.mapper.EnrollmentMapper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,13 +24,16 @@ public class EnrollmentServiceImpl implements EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
+    private final EnrollmentMapper enrollmentMapper;
 
     public EnrollmentServiceImpl(EnrollmentRepository enrollmentRepository,
                                  CourseRepository courseRepository,
-                                 UserRepository userRepository) {
+                                 UserRepository userRepository,
+                                 EnrollmentMapper enrollmentMapper) {
         this.enrollmentRepository = enrollmentRepository;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
+        this.enrollmentMapper = enrollmentMapper;
     }
 
     @Override
@@ -52,7 +56,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 .build();
 
         Enrollment saved = enrollmentRepository.save(enrollment);
-        return toDto(saved);
+        return enrollmentMapper.toDto(saved);
     }
 
     @Override
@@ -61,7 +65,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
         User user = currentUser();
         return enrollmentRepository.findByUserId(user.getId())
                 .stream()
-                .map(this::toDto)
+            .map(enrollmentMapper::toDto)
                 .toList();
     }
 
@@ -77,17 +81,7 @@ public class EnrollmentServiceImpl implements EnrollmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Enrollment not found for user"));
         enrollment.setProgressPercent(progressPercent);
         Enrollment saved = enrollmentRepository.save(enrollment);
-        return toDto(saved);
-    }
-
-    private EnrollmentDto toDto(Enrollment enrollment) {
-        return new EnrollmentDto(
-                enrollment.getId(),
-                enrollment.getUser().getId(),
-                enrollment.getCourse().getId(),
-                enrollment.getCreatedAt(),
-                enrollment.getProgressPercent()
-        );
+        return enrollmentMapper.toDto(saved);
     }
 
     private User currentUser() {

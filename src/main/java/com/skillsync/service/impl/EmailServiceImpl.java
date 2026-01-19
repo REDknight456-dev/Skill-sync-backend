@@ -80,6 +80,28 @@ public class EmailServiceImpl implements EmailService {
         sendHtml(adminEmail, subject, content);
     }
 
+    @Override
+    public void sendTwoFactorCode(String toEmail, String code) {
+        String subject = "Your Skill-Sync 2FA code";
+        String content = """
+                <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 480px; margin: auto; border: 1px solid #0b1f3a; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.12);">
+                    <div style="background: linear-gradient(135deg, #0b1f3a 0%%, #122b50 60%%, #1d4ed8 100%%); padding: 22px; text-align: center;">
+                        <h2 style=\"color: #e2e8f0; margin: 0; font-size: 22px;\">Two-Factor Code</h2>
+                    </div>
+                    <div style="padding: 22px; background-color: #0f172a; color: #e2e8f0; text-align: center;">
+                        <p style=\"margin: 0 0 12px; color: #cbd5e1;\">Use this code to complete your login:</p>
+                        <div style=\"display: inline-block; padding: 12px 20px; background: #1d4ed8; color: #f8fafc; border-radius: 8px; font-size: 22px; letter-spacing: 2px; font-weight: 700;\">%s</div>
+                        <p style=\"margin: 14px 0 0; color: #94a3b8; font-size: 13px;\">This code expires in 10 minutes.</p>
+                    </div>
+                    <div style="background-color: #0b1224; padding: 16px; text-align: center; color: #94a3b8; font-size: 12px;">
+                        If you did not request this, you can ignore this email.
+                    </div>
+                </div>
+                """.formatted(code);
+
+        sendHtml(toEmail, subject, content);
+    }
+
     private void sendHtml(String to, String subject, String html) {
         try {
             MimeMessage message = mailSender.createMimeMessage();

@@ -3,6 +3,8 @@ package com.skillsync.controller;
 import com.skillsync.dto.AuthRequest;
 import com.skillsync.dto.AuthResponse;
 import com.skillsync.dto.RegisterRequest;
+import com.skillsync.dto.TwoFactorLoginResponse;
+import com.skillsync.dto.TwoFactorVerifyRequest;
 import com.skillsync.service.AuthService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -28,7 +30,12 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<TwoFactorLoginResponse> login(@Valid @RequestBody AuthRequest request) {
+        return ResponseEntity.accepted().body(authService.login(request));
+    }
+
+    @PostMapping("/verify-2fa")
+    public ResponseEntity<AuthResponse> verify(@Valid @RequestBody TwoFactorVerifyRequest request) {
+        return ResponseEntity.ok(authService.verifyTwoFactor(request));
     }
 }

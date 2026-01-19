@@ -3,7 +3,8 @@ package com.skillsync.service.impl;
 import com.skillsync.dto.AuthRequest;
 import com.skillsync.dto.AuthResponse;
 import com.skillsync.dto.RegisterRequest;
-import com.skillsync.dto.UserDto;
+import com.skillsync.dto.TwoFactorLoginResponse;
+import com.skillsync.dto.TwoFactorVerifyRequest;
 import com.skillsync.entity.Role;
 import com.skillsync.entity.User;
 import com.skillsync.mapper.UserMapper;
@@ -18,6 +19,12 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Service
 public class AuthServiceImpl implements AuthService {
 
@@ -27,6 +34,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final UserMapper userMapper;
+    private final SecureRandom secureRandom = new SecureRandom();
+    private final Map<String, TempCode> twoFactorCache = new ConcurrentHashMap<>();
 
     public AuthServiceImpl(UserRepository userRepository,
                            PasswordEncoder passwordEncoder,
@@ -67,10 +76,38 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public AuthResponse login(AuthRequest request) {
+    public TwoFactorLoginResponse login(AuthRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.email(), request.password()));
         User user = userRepository.findByEmail(request.email())
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        cleanupExpired();
+        String code = generateCode();
+        String token = UUID.randomUUID().toString();
+        twoFactorCache.put(token, new TempCode(user.getEmail(), code, Instant.now().plusSeconds(600)));
+
+        emailService.sendTwoFactorCode(user.getEmail(), code);
+        return new TwoFactorLoginResponse(true, token, "2FA code sent", user.getEmail());
+    }
+
+    @Override
+    public AuthResponse verifyTwoFactor(TwoFactorVerifyRequest request) {
+        cleanupExpired();
+
+        TempCode temp = twoFactorCache.get(request.twoFactorToken());
+        if (temp == null || temp.expiresAt().isBefore(Instant.now())) {
+            twoFactorCache.remove(request.twoFactorToken());
+            throw new IllegalArgumentException("Invalid or expired token");
+        }
+
+        if (!temp.code().equals(request.code())) {
+            throw new IllegalArgumentException("Invalid code");
+        }
+
+        twoFactorCache.remove(request.twoFactorToken());
+        User user = userRepository.findByEmail(temp.email())
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
         UserDetails principal = org.springframework.security.core.userdetails.User.builder()
                 .username(user.getEmail())
                 .password(user.getPassword())
@@ -78,7 +115,19 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         String token = jwtService.generateToken(principal);
         return new AuthResponse(token, jwtService.extractClaim(token, claims -> claims.getExpiration().toInstant()),
-            userMapper.toDto(user));
+                userMapper.toDto(user));
     }
+
+    private void cleanupExpired() {
+        Instant now = Instant.now();
+        twoFactorCache.entrySet().removeIf(e -> e.getValue().expiresAt().isBefore(now));
+    }
+
+    private String generateCode() {
+        int number = secureRandom.nextInt(900_000) + 100_000; // 6-digit
+        return String.valueOf(number);
+    }
+
+    private record TempCode(String email, String code, Instant expiresAt) { }
 
 }
