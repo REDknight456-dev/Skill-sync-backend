@@ -1,0 +1,15 @@
+# Build outputs
+/target/
+
+# IDE config
+/.idea/
+/.vscode/
+*.iml
+
+# Logs and temp
+*.log
+/tmp/
+
+# OS noise
+.DS_Store
+Thumbs.db
