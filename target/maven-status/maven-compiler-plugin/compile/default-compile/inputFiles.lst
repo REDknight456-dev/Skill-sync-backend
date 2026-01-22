@@ -20,6 +20,7 @@ D:\Dad Project\Backe nd\src\main\java\com\skillsync\entity\TwoFactorCode.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\entity\User.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\exception\GlobalExceptionHandler.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\mapper\CourseMapper.java
+D:\Dad Project\Backe nd\src\main\java\com\skillsync\mapper\EnrollmentMapper.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\mapper\UserMapper.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\repository\CourseRepository.java
 D:\Dad Project\Backe nd\src\main\java\com\skillsync\repository\EnrollmentRepository.java
